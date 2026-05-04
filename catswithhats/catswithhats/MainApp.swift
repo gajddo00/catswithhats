@@ -7,17 +7,24 @@
 
 import FirebaseCore
 import SwiftUI
+import UIKit
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        FirebaseApp.configure()
+        return true
+    }
+}
 
 @main
 struct MainApp: App {
-    @State private var authService: any AuthService
-    @State private var databaseService: any DatabaseService
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
-    init() {
-        FirebaseApp.configure()
-        _authService = State(initialValue: FirebaseAuthService())
-        _databaseService = State(initialValue: FirebaseDatabaseService())
-    }
+    @State private var authService: any AuthService = FirebaseAuthService()
+    @State private var databaseService: any DatabaseService = FirebaseDatabaseService()
 
     var body: some Scene {
         WindowGroup {

@@ -12,6 +12,17 @@
         }
       }
     },
+    "error_username_taken" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username is already taken"
+          }
+        }
+      }
+    },
     "logged_in" : {
       "extractionState" : "manual",
       "localizations" : {

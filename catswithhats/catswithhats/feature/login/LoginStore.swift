@@ -13,9 +13,11 @@ import SwiftUI
 final class LoginStore: Store {
     private(set) var state = State()
     private let authService: any AuthService
-    
-    init(authService: any AuthService) {
+    private let databaseService: any DatabaseService
+
+    init(authService: any AuthService, databaseService: any DatabaseService) {
         self.authService = authService
+        self.databaseService = databaseService
     }
     
     func send(_ action: Action) {
@@ -43,7 +45,8 @@ final class LoginStore: Store {
 private extension LoginStore {
     func signIn() async {
         do {
-            _ = try await authService.signInAnonymously(displayName: state.username)
+            let uid = try await authService.signInAnonymously(displayName: state.username)
+            try await databaseService.createUserIfNeeded(id: uid, name: state.username)
             send(.signInSucceeded)
         } catch {
             send(.signInFailed(error.localizedDescription))
