@@ -72,42 +72,109 @@ final class PaywallStore: Store {
             Task { await restore() }
         case .dismiss:
             break
+        case .dismissPurchaseSuccess:
+            state.showPurchaseSuccess = false
+            state.purchasedPackageTitle = nil
         }
     }
 }
 
 private extension PaywallStore {
     func loadPackages() async {
+        state.isLoading = true
         do {
             let offerings = try await Purchases.shared.offerings()
-            guard let current = offerings.current else {
-                state.packages = []
+            guard let current = offerings.current,
+                  !current.availablePackages.isEmpty else {
+                loadMockPackages()
+                state.isLoading = false
                 return
             }
             state.packages = current.availablePackages.map(packageInfo(from:))
             state.selectedPackage = state.packages.first
+            state.isLoading = false
         } catch {
-            // surface later
+            print("Error loading offerings: \(error)")
+            loadMockPackages()
+            state.isLoading = false
         }
     }
 
+    func loadMockPackages() {
+        state.packages = [
+            PackageInfo(
+                id: "starter_bag",
+                title: "Starter Bag",
+                subtitle: "50 Tokens",
+                price: "$0.99",
+                icon: "🎁",
+                tokens: 50
+            ),
+            PackageInfo(
+                id: "bucket_treats",
+                title: "Bucket of Treats",
+                subtitle: "250 Tokens",
+                price: "$4.99",
+                icon: "🪣",
+                tokens: 250
+            ),
+            PackageInfo(
+                id: "golden_crate",
+                title: "Golden Crate",
+                subtitle: "500 Tokens",
+                price: "$14.99",
+                icon: "📦",
+                tokens: 500
+            )
+        ]
+        state.selectedPackage = state.packages.first
+    }
+
     func purchase() async {
-        guard let info = state.selectedPackage,
-              let pkg = info.package else { return }
+        guard let info = state.selectedPackage else { return }
         state.isPurchasing = true
+        state.errorMessage = nil
         defer { state.isPurchasing = false }
+
+        // Mock package (no RC backing): simulate the purchase.
+        guard let pkg = info.package else {
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            do {
+                try await databaseService.addTokens(userID: userID, amount: info.tokens)
+                onCoinsChanged?()
+                state.purchasedPackageTitle = info.title
+                state.showPurchaseSuccess = true
+            } catch {
+                state.errorMessage = error.localizedDescription
+            }
+            return
+        }
+
+        // Real RC package.
         do {
             let result = try await Purchases.shared.purchase(package: pkg)
             guard !result.userCancelled else { return }
             try await databaseService.addTokens(userID: userID, amount: info.tokens)
             onCoinsChanged?()
+            state.purchasedPackageTitle = info.title
+            state.showPurchaseSuccess = true
         } catch {
-            // surface later
+            print("Purchase failed: \(error)")
+            state.errorMessage = error.localizedDescription
         }
     }
 
     func restore() async {
-        _ = try? await Purchases.shared.restorePurchases()
+        state.isLoading = true
+        do {
+            let customerInfo = try await Purchases.shared.restorePurchases()
+            print("Purchases restored: \(customerInfo)")
+            await loadPackages()
+        } catch {
+            print("Restore failed: \(error)")
+            state.isLoading = false
+            state.errorMessage = error.localizedDescription
+        }
     }
 
     func packageInfo(from package: Package) -> PackageInfo {
@@ -150,12 +217,17 @@ extension PaywallStore {
         case purchase
         case restorePurchases
         case dismiss
+        case dismissPurchaseSuccess
     }
 
     struct State {
         var packages: [PackageInfo] = []
         var selectedPackage: PackageInfo?
         var isPurchasing: Bool = false
+        var isLoading: Bool = false
         var hasActiveSubscription: Bool = false
+        var errorMessage: String?
+        var showPurchaseSuccess: Bool = false
+        var purchasedPackageTitle: String?
     }
 }

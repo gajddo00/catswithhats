@@ -18,6 +18,8 @@ protocol DatabaseService {
     func drawRandomCard(userID: String) async throws -> Card
     func spendTokens(userID: String, amount: Int) async throws
     func addTokens(userID: String, amount: Int) async throws
+    func getRandomCardPreview(userID: String) async throws -> Card
+    func assignCard(userID: String, cardID: String) async throws
 }
 
 enum DatabaseError: LocalizedError {
@@ -113,6 +115,31 @@ final class FirebaseDatabaseService: DatabaseService {
         return picked
     }
 
+    func getRandomCardPreview(userID: String) async throws -> Card {
+        async let allCards = fetchCards()
+        async let userCards = fetchUserCards(userID: userID)
+        let (cards, owned) = try await (allCards, userCards)
+        let ownedIDs = Set(owned.map(\.cardID))
+        let unowned = cards.filter { !ownedIDs.contains($0.id) }
+        guard let picked = pickWeightedRandom(from: unowned.isEmpty ? cards : unowned) else {
+            throw DatabaseError.noCardsAvailable
+        }
+        return picked
+    }
+
+    func assignCard(userID: String, cardID: String) async throws {
+        let docID = "\(userID)_\(cardID)"
+        let ref = firestore.collection(userCardsScheme).document(docID)
+        let snapshot = try await ref.getDocument()
+
+        if snapshot.exists {
+            try await ref.updateData(["quantity": FieldValue.increment(Int64(1))])
+        } else {
+            let userCard = UserCard(id: docID, userID: userID, cardID: cardID, quantity: 1, acquiredAt: Date())
+            try ref.setData(from: userCard)
+        }
+    }
+
     func seedCardsIfNeeded() async throws {
         let collection = firestore.collection(cardsScheme)
         let snapshot = try await collection.limit(to: 1).getDocuments()
@@ -144,27 +171,6 @@ private extension FirebaseDatabaseService {
             if roll < 0 { return card }
         }
         return pool.last
-    }
-
-    func assignCard(userID: String, cardID: String) async throws {
-        let docID = "\(userID)_\(cardID)"
-        let ref = firestore.collection(userCardsScheme).document(docID)
-        let snapshot = try await ref.getDocument()
-
-        if snapshot.exists {
-            try await ref.updateData([
-                "quantity": FieldValue.increment(Int64(1))
-            ])
-        } else {
-            let userCard = UserCard(
-                id: docID,
-                userID: userID,
-                cardID: cardID,
-                quantity: 1,
-                acquiredAt: Date()
-            )
-            try ref.setData(from: userCard)
-        }
     }
 }
 

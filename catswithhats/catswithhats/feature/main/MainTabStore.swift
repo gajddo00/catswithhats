@@ -19,13 +19,22 @@ final class MainTabStore: Store {
 
     func send(_ action: Action) {
         switch action {
-        case .onAppear, .refresh:
+        case .onAppear:
+            Task {
+                await seed()
+                await refresh()
+            }
+        case .refresh:
             Task { await refresh() }
         }
     }
 }
 
 private extension MainTabStore {
+    func seed() async {
+        try? await databaseService.seedCardsIfNeeded()
+    }
+
     func refresh() async {
         do {
             let user = try await databaseService.fetchUser(id: userID)

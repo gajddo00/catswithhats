@@ -79,7 +79,7 @@ struct CatCollectionScreen: View {
 
                 LazyVGrid(
                     columns: [GridItem(.flexible()), GridItem(.flexible())],
-                    spacing: .large
+                    spacing: .extraLarge
                 ) {
                     ForEach(store.state.availableCards) { card in
                         CollectionCardItemView(
@@ -99,8 +99,8 @@ struct CatCollectionScreen: View {
                 }
                 .buttonStyle(ChunkyButtonStyle(fillColor: Color.Theme.primaryContainer))
             }
-            .padding(.regular)
-            .padding(.bottom, .extraLarge)
+            .padding(.extraLarge)
+            .padding(.bottom, .regular)
         }
     }
 }
