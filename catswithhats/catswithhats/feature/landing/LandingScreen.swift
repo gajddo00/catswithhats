@@ -21,9 +21,7 @@ struct LandingScreen: View {
 
     var body: some View {
         if isAuthenticated {
-            Text("logged_in")
-                .font(.title)
-                .padding()
+            MainTabScreen(databaseService: databaseService)
         } else {
             LoginScreen(
                 authService: authService,
