@@ -50,7 +50,7 @@ final class FirebaseDatabaseService: DatabaseService {
             throw DatabaseError.usernameTaken
         }
 
-        let user = User(id: id, name: name, createdAt: Date())
+        let user = User(id: id, name: name, createdAt: Date(), tokens: 50)
         try ref.setData(from: user)
     }
 

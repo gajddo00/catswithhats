@@ -32,8 +32,11 @@ struct MainTabScreen: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             NavigationStack {
-                GachaScreen(databaseService: databaseService)
-                    .coinsToolbar(coins: store.state.coins)
+                GachaScreen(
+                    databaseService: databaseService,
+                    userID: userID
+                )
+                .coinsToolbar(coins: store.state.coins)
             }
             .tabItem { Label("GACHA", systemImage: "wand.and.sparkles.inverse") }
             .tag(AppTab.gacha)
