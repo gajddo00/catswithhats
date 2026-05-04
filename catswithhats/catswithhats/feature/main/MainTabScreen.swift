@@ -6,12 +6,16 @@
 import SwiftUI
 
 struct MainTabScreen: View {
+    let authService: any AuthService
     let databaseService: any DatabaseService
 
     var body: some View {
         TabView {
             NavigationStack {
-                GachaScreen(databaseService: databaseService)
+                GachaScreen(
+                    authService: authService,
+                    databaseService: databaseService
+                )
             }
             .tabItem {
                 Label("GACHA", systemImage: "wand.and.sparkles.inverse")
