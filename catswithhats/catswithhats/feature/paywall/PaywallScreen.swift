@@ -152,8 +152,10 @@ struct PaywallScreen: View {
                         .fill(Color(red: 0.85, green: 0.75, blue: 0.65))
                         .frame(width: 80, height: 80)
                     
-                    Image(systemName: "photo")
-                        .font(.system(size: 30))
+                    Image("Logo")
+						.resizable()
+						.scaledToFit()
+						.frame(width: 80, height: 80)
                         .foregroundStyle(.white.opacity(0.5))
                 }
                 .padding(.trailing, 16)
