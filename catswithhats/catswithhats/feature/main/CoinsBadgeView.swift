@@ -19,8 +19,5 @@ struct CoinsBadgeView: View {
         }
         .padding(.horizontal, .mid)
         .padding(.vertical, 6)
-        .background(Color.white)
-        .stickerStyle(Capsule(), lineWidth: 2, shadowOffset: 3)
-        .padding(.regular)
     }
 }

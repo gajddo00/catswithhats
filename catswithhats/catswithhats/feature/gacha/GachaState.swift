@@ -27,5 +27,5 @@ extension GachaState {
         return nil
     }
 
-    var canSpin: Bool { tokens > 0 && !isSpinning }
+    var canSpin: Bool { tokens >= GachaStore.spinCost && !isSpinning }
 }

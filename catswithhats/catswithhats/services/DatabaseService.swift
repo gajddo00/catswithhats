@@ -16,6 +16,8 @@ protocol DatabaseService {
     func fetchUserCards(userID: String) async throws -> [UserCard]
     func seedCardsIfNeeded() async throws
     func drawRandomCard(userID: String) async throws -> Card
+    func spendTokens(userID: String, amount: Int) async throws
+    func addTokens(userID: String, amount: Int) async throws
     func getRandomCardPreview(userID: String) async throws -> Card
     func assignCard(userID: String, cardID: String) async throws
 }
@@ -23,6 +25,7 @@ protocol DatabaseService {
 enum DatabaseError: LocalizedError {
     case usernameTaken
     case noCardsAvailable
+    case insufficientTokens
 
     var errorDescription: String? {
         switch self {
@@ -30,6 +33,8 @@ enum DatabaseError: LocalizedError {
             String(localized: "error_username_taken")
         case .noCardsAvailable:
             "No cards available to draw."
+        case .insufficientTokens:
+            "Not enough tokens."
         }
     }
 }
@@ -80,6 +85,25 @@ final class FirebaseDatabaseService: DatabaseService {
             .whereField("user_id", isEqualTo: userID)
             .getDocuments()
         return try snapshot.documents.map { try $0.data(as: UserCard.self) }
+    }
+
+    func spendTokens(userID: String, amount: Int) async throws {
+        let ref = firestore.collection(usersScheme).document(userID)
+        let snapshot = try await ref.getDocument()
+        let user = try snapshot.data(as: User.self)
+        guard (user.tokens ?? 0) >= amount else {
+            throw DatabaseError.insufficientTokens
+        }
+        try await ref.updateData([
+            "tokens": FieldValue.increment(Int64(-amount))
+        ])
+    }
+
+    func addTokens(userID: String, amount: Int) async throws {
+        let ref = firestore.collection(usersScheme).document(userID)
+        try await ref.updateData([
+            "tokens": FieldValue.increment(Int64(amount))
+        ])
     }
 
     func drawRandomCard(userID: String) async throws -> Card {
