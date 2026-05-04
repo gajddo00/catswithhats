@@ -6,18 +6,46 @@
 import Foundation
 import Observation
 
+struct PackageInfo: Identifiable, Hashable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let price: String
+    let icon: String
+    let package: Any?
+    
+    init(id: String, title: String, subtitle: String, price: String, icon: String, package: Any? = nil) {
+        self.id = id
+        self.title = title
+        self.subtitle = subtitle
+        self.price = price
+        self.icon = icon
+        self.package = package
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: PackageInfo, rhs: PackageInfo) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 @Observable
 final class PaywallStore: Store {
     private(set) var state = State()
     
-    init() {}
+    init() {
+        loadPackages()
+    }
     
     func send(_ action: Action) {
         switch action {
         case .onAppear:
-            Task { await load() }
+            break
         case .selectPackage(let package):
-            state.contentState?.selectedPackage = package
+            state.selectedPackage = package
         case .purchase:
             Task { await purchase() }
         case .restorePurchases:
@@ -30,11 +58,9 @@ final class PaywallStore: Store {
 }
 
 private extension PaywallStore {
-    func load() async {
-        state.uiState = .loading
-        
+    func loadPackages() {
         // Mock data matching the screenshot design
-        let packages = [
+        state.packages = [
             PackageInfo(
                 id: "starter_bag",
                 title: "Starter Bag",
@@ -57,39 +83,25 @@ private extension PaywallStore {
                 icon: "📦"
             )
         ]
-        
-        state.uiState = .content(PaywallState(
-            packages: packages,
-            selectedPackage: nil,
-            isPurchasing: false,
-            hasActiveSubscription: false
-        ))
     }
     
     func purchase() async {
-        guard var contentState = state.contentState,
-              let selectedPackage = contentState.selectedPackage else {
+        guard let selectedPackage = state.selectedPackage else {
             return
         }
         
-        contentState.isPurchasing = true
-        state.uiState = .content(contentState)
+        state.isPurchasing = true
         
         // TODO: Implement actual RevenueCat purchase
         // For now, just simulate a delay
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         
-        contentState.isPurchasing = false
-        state.uiState = .content(contentState)
+        state.isPurchasing = false
     }
     
     func restore() async {
-        state.uiState = .loading
-        
         // TODO: Implement actual RevenueCat restore
         try? await Task.sleep(nanoseconds: 1_000_000_000)
-        
-        await load()
     }
 }
 
@@ -103,20 +115,9 @@ extension PaywallStore {
     }
     
     struct State {
-        var uiState: UiState<PaywallState> = .loading
-        
-        var contentState: PaywallState? {
-            get {
-                if case .content(let state) = uiState {
-                    return state
-                }
-                return nil
-            }
-            set {
-                if let newValue = newValue {
-                    uiState = .content(newValue)
-                }
-            }
-        }
+        var packages: [PackageInfo] = []
+        var selectedPackage: PackageInfo?
+        var isPurchasing: Bool = false
+        var hasActiveSubscription: Bool = false
     }
 }
