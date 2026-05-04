@@ -56,6 +56,9 @@ final class PaywallStore: Store {
         case .dismiss:
             // Handle dismiss - parent view should handle this
             break
+        case .dismissPurchaseSuccess:
+            state.showPurchaseSuccess = false
+            state.purchasedPackageTitle = nil
         }
     }
 }
@@ -175,22 +178,32 @@ private extension PaywallStore {
     }
     
     func purchase() async {
-        guard let selectedPackage = state.selectedPackage,
-              let rcPackage = selectedPackage.rcPackage else {
+        guard let selectedPackage = state.selectedPackage else {
             return
         }
         
         state.isPurchasing = true
+        state.errorMessage = nil
+        
+        // If this is a mock package (no rcPackage), simulate purchase
+        guard let rcPackage = selectedPackage.rcPackage else {
+            // Simulate delay for mock purchase
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            state.purchasedPackageTitle = selectedPackage.title
+            state.showPurchaseSuccess = true
+            state.isPurchasing = false
+            return
+        }
         
         do {
             let result = try await Purchases.shared.purchase(package: rcPackage)
             
             // Check if the user successfully purchased
             if !result.userCancelled {
-                // Purchase successful
+                // Purchase successful - show success animation
                 print("Purchase successful: \(result.customerInfo)")
-                // You can check entitlements here if needed
-                // if result.customerInfo.entitlements["pro"]?.isActive == true { ... }
+                state.purchasedPackageTitle = selectedPackage.title
+                state.showPurchaseSuccess = true
             }
             
             state.isPurchasing = false
@@ -225,6 +238,7 @@ extension PaywallStore {
         case purchase
         case restorePurchases
         case dismiss
+        case dismissPurchaseSuccess
     }
     
     struct State {
@@ -234,5 +248,7 @@ extension PaywallStore {
         var isLoading: Bool = false
         var hasActiveSubscription: Bool = false
         var errorMessage: String?
+        var showPurchaseSuccess: Bool = false
+        var purchasedPackageTitle: String?
     }
 }

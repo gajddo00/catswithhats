@@ -17,9 +17,33 @@ struct PaywallScreen: View {
                     .ignoresSafeArea()
                 
                 contentView
+                
+                // Purchase success overlay with confetti
+                if store.state.showPurchaseSuccess,
+                   let packageTitle = store.state.purchasedPackageTitle {
+                    PurchaseSuccessOverlay(
+                        packageTitle: packageTitle,
+                        isPresented: Binding(
+                            get: { store.state.showPurchaseSuccess },
+                            set: { if !$0 { store.send(.dismissPurchaseSuccess) } }
+                        )
+                    )
+                    .transition(.opacity)
+                }
             }
             .navigationTitle("Shop")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        store.send(.dismiss)
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundStyle(.black)
+                    }
+                }
+            }
         }
     }
     
