@@ -9,12 +9,12 @@ import Observation
 @Observable
 final class GachaStore: Store {
     private(set) var state = State()
-    private let authService: any AuthService
     private let databaseService: any DatabaseService
+    private let userID: String
 
-    init(authService: any AuthService, databaseService: any DatabaseService) {
-        self.authService = authService
+    init(databaseService: any DatabaseService, userID: String) {
         self.databaseService = databaseService
+        self.userID = userID
     }
 
     func send(_ action: Action) {
@@ -23,7 +23,7 @@ final class GachaStore: Store {
             Task { await load() }
 
         case .spinTapped:
-            guard case .content(let s) = state.uiState, s.canSpin else { return }
+            guard case .content(let s) = state.uiState, !s.isSpinning else { return }
             Task { await spin() }
 
         case .dismissResult:
@@ -37,10 +37,6 @@ private extension GachaStore {
         if case .content = state.uiState { return }
         state.uiState = .loading
         do {
-            guard let userID = authService.currentUserID else {
-                state.uiState = .error("Not signed in")
-                return
-            }
             let user = try await databaseService.fetchUser(id: userID)
             state.uiState = .content(GachaState(user: user))
         } catch {
@@ -49,7 +45,6 @@ private extension GachaStore {
     }
 
     func spin() async {
-        guard let userID = authService.currentUserID else { return }
         updateContent { $0.phase = .spinning }
 
         let drawTask = Task<Card, Error> {

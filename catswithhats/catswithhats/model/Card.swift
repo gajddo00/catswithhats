@@ -10,6 +10,7 @@ import Foundation
 struct Card: Codable, Identifiable, Hashable, Sendable {
     var id: String
     var name: String
+    var description: String?
     var assetID: String
     var rarity: Rarity
     var weight: Int
@@ -17,6 +18,7 @@ struct Card: Codable, Identifiable, Hashable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id
         case name
+        case description
         case assetID = "asset_id"
         case rarity
         case weight

@@ -8,10 +8,10 @@ import SwiftUI
 struct GachaScreen: View {
     @State private var store: GachaStore
 
-    init(authService: any AuthService, databaseService: any DatabaseService) {
+    init(databaseService: any DatabaseService, userID: String) {
         _store = State(initialValue: GachaStore(
-            authService: authService,
-            databaseService: databaseService
+            databaseService: databaseService,
+            userID: userID
         ))
     }
 
@@ -25,9 +25,6 @@ struct GachaScreen: View {
                 Text("CATS WITH HATS")
                     .font(.system(size: 16, weight: .black))
                     .foregroundStyle(Color.cInk)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                TokenChip(tokens: tokens)
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -73,11 +70,6 @@ private extension GachaScreen {
         .padding(.vertical, .large)
     }
 
-    var tokens: Int {
-        if case .content(let s) = store.state.uiState { return s.tokens }
-        return 0
-    }
-
     var drawnCardBinding: Binding<Card?> {
         Binding(
             get: {
@@ -88,29 +80,6 @@ private extension GachaScreen {
                 if newValue == nil { store.send(.dismissResult) }
             }
         )
-    }
-}
-
-// MARK: - Token Chip
-
-private struct TokenChip: View {
-    let tokens: Int
-
-    var body: some View {
-        HStack(spacing: .min) {
-            Image(systemName: "dollarsign.circle.fill")
-                .font(.system(size: 16, weight: .black))
-                .foregroundStyle(.yellow)
-            Text(tokens.formatted())
-                .font(.system(size: 14, weight: .black))
-                .foregroundStyle(Color.cInk)
-        }
-        .padding(.horizontal, .mid)
-        .padding(.vertical, 6)
-        .background(Color.white)
-        .stickerStyle(Capsule(), lineWidth: 2, shadowOffset: 3)
-        .padding(.horizontal, .regular)
-        .padding(.vertical, .small)
     }
 }
 
@@ -141,7 +110,7 @@ private struct TurnButton: View {
             }
         }
         .buttonStyle(.sticker)
-        .disabled(!isEnabled)
+        // .disabled(!isEnabled)
         .frame(maxWidth: 240)
     }
 }
@@ -208,8 +177,7 @@ private struct GachaMachineView: View {
         ZStack {
             Circle()
                 .fill(Color.white.opacity(0.45))
-            Circle()
-                .stroke(Color.cInk, lineWidth: 4)
+                .overlay(Circle().strokeBorder(Color.cInk, lineWidth: 4))
             CapsulesView(isSpinning: isSpinning)
                 .padding(.large)
         }
@@ -234,8 +202,7 @@ private struct GachaMachineView: View {
             ZStack {
                 Circle()
                     .fill(Color(red: 0.91, green: 0.89, blue: 0.80))
-                Circle()
-                    .stroke(Color.cInk, lineWidth: 4)
+                    .overlay(Circle().strokeBorder(Color.cInk, lineWidth: 4))
                 Capsule()
                     .fill(Color.cInk)
                     .frame(width: 4, height: 38)
@@ -249,7 +216,6 @@ private struct GachaMachineView: View {
                     .frame(width: 12, height: 12)
             }
             .frame(width: 56, height: 56)
-            .shadow(color: Color.cInk, radius: 0, x: 4, y: 4)
             .rotationEffect(.degrees(isSpinning ? 360 : 0))
             .animation(
                 isSpinning
@@ -304,9 +270,8 @@ private struct CapsulesView: View {
             ForEach(0..<capsules.count, id: \.self) { i in
                 Circle()
                     .fill(capsules[i].color)
+                    .overlay(Circle().strokeBorder(Color.cInk, lineWidth: 2))
                     .frame(width: 30, height: 30)
-                    .overlay(Circle().stroke(Color.cInk, lineWidth: 2))
-                    .shadow(color: Color.cInk, radius: 0, x: 2, y: 2)
                     .offset(capsules[i].offset)
             }
         }
