@@ -20,9 +20,14 @@ final class MainTabStore: Store {
     func send(_ action: Action) {
         switch action {
         case .onAppear:
-            // TODO: fetch coin balance from databaseService
-            break
+            Task { await seed() }
         }
+    }
+}
+
+private extension MainTabStore {
+    func seed() async {
+        try? await databaseService.seedCardsIfNeeded()
     }
 }
 
