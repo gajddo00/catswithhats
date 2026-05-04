@@ -4,5 +4,6 @@
 //
 
 enum AppRoute: Hashable {
-    case catDetail(Card)
+    case catDetail(Cat)
+    case paywall
 }
