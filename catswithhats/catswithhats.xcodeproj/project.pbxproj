@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		53920CBB2FA8C54700D0F3CD /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 53920CBA2FA8C54700D0F3CD /* RevenueCat */; };
+		53920CBD2FA8C54700D0F3CD /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = 53920CBC2FA8C54700D0F3CD /* RevenueCatUI */; };
 		AA0000012FA8A92C00009D75 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000032FA8A92C00009D75 /* FirebaseAuth */; };
 		AA0000022FA8A92C00009D75 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000042FA8A92C00009D75 /* FirebaseFirestore */; };
 /* End PBXBuildFile section */
@@ -28,8 +30,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53920CBD2FA8C54700D0F3CD /* RevenueCatUI in Frameworks */,
 				AA0000012FA8A92C00009D75 /* FirebaseAuth in Frameworks */,
 				AA0000022FA8A92C00009D75 /* FirebaseFirestore in Frameworks */,
+				53920CBB2FA8C54700D0F3CD /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +78,8 @@
 			packageProductDependencies = (
 				AA0000032FA8A92C00009D75 /* FirebaseAuth */,
 				AA0000042FA8A92C00009D75 /* FirebaseFirestore */,
+				53920CBA2FA8C54700D0F3CD /* RevenueCat */,
+				53920CBC2FA8C54700D0F3CD /* RevenueCatUI */,
 			);
 			productName = catswithhats;
 			productReference = DD4669822FA8A92C00009D75 /* catswithhats.app */;
@@ -105,6 +111,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				AA0000052FA8A92C00009D75 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				53920CB92FA8C54700D0F3CD /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DD4669832FA8A92C00009D75 /* Products */;
@@ -265,7 +272,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZL55DSY2A6;
+				DEVELOPMENT_TEAM = ZCF7ZR4CVF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Cats with hats";
@@ -298,7 +305,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZL55DSY2A6;
+				DEVELOPMENT_TEAM = ZCF7ZR4CVF;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Cats with hats";
@@ -348,6 +355,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		53920CB92FA8C54700D0F3CD /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.70.0;
+			};
+		};
 		AA0000052FA8A92C00009D75 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
@@ -359,6 +374,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		53920CBA2FA8C54700D0F3CD /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 53920CB92FA8C54700D0F3CD /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		53920CBC2FA8C54700D0F3CD /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 53920CB92FA8C54700D0F3CD /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
 		AA0000032FA8A92C00009D75 /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = AA0000052FA8A92C00009D75 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
