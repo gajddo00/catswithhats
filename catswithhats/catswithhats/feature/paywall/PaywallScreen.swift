@@ -24,38 +24,67 @@ struct PaywallScreen: View {
     }
     
     private var contentView: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Limited Time Offer Banner
-                limitedOfferBanner
-                
-                // Package Cards
-                VStack(spacing: 12) {
-                    ForEach(store.state.packages) { package in
-                        packageCard(package, isSelected: store.state.selectedPackage?.id == package.id)
-                            .onTapGesture {
-                                store.send(.selectPackage(package))
-                            }
+        ZStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // Error message if any
+                    if let errorMessage = store.state.errorMessage {
+                        errorBanner(errorMessage)
+                    }
+                    
+                    // Limited Time Offer Banner
+                    limitedOfferBanner
+                    
+                    // Package Cards
+                    VStack(spacing: 12) {
+                        ForEach(store.state.packages) { package in
+                            packageCard(package, isSelected: store.state.selectedPackage?.id == package.id)
+                                .onTapGesture {
+                                    store.send(.selectPackage(package))
+                                }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    
+                    Spacer(minLength: 32)
+                    
+                    // Missing a Hat Banner
+                    missingHatBanner
+                    
+                    // Purchase Button
+                    if let selectedPackage = store.state.selectedPackage {
+                        purchaseButton(package: selectedPackage, isPurchasing: store.state.isPurchasing)
                     }
                 }
-                .padding(.horizontal, 16)
-                
-                Spacer(minLength: 32)
-                
-                // Missing a Hat Banner
-                missingHatBanner
-                
-                // Purchase Button
-                if let selectedPackage = store.state.selectedPackage {
-                    purchaseButton(package: selectedPackage, isPurchasing: store.state.isPurchasing)
-                }
+                .padding(.top, 16)
+                .padding(.bottom, 100)
             }
-            .padding(.top, 16)
-            .padding(.bottom, 100)
+            .opacity(store.state.isLoading ? 0.5 : 1)
+            .disabled(store.state.isLoading)
+            
+            if store.state.isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+            }
         }
         .onAppear {
             store.send(.onAppear)
         }
+    }
+    
+    private func errorBanner(_ message: String) -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.red)
+            Spacer()
+        }
+        .padding()
+        .background(Color.red.opacity(0.1))
+        .cornerRadius(8)
+        .padding(.horizontal, 16)
     }
     
     private var limitedOfferBanner: some View {
