@@ -14,15 +14,16 @@ struct ShopScreen: View {
     }
 
     var body: some View {
-        switch store.state.uiState {
-        case .loading:
-            ProgressView()
-        case .error(let message):
-            Text(message)
-                .foregroundStyle(.red)
-        case .content(let state):
-            contentView(state)
-        }
+		PaywallScreen()
+//        switch store.state.uiState {
+//        case .loading:
+//            ProgressView()
+//        case .error(let message):
+//            Text(message)
+//                .foregroundStyle(.red)
+//        case .content(let state):
+//            contentView(state)
+//        }
     }
 
     private func contentView(_ state: ShopState) -> some View {

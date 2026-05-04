@@ -16,33 +16,14 @@ struct PaywallScreen: View {
                 Color(red: 0.95, green: 0.94, blue: 0.87)
                     .ignoresSafeArea()
                 
-                switch store.state.uiState {
-                case .loading:
-                    ProgressView()
-                case .error(let message):
-                    Text(message)
-                        .foregroundStyle(.red)
-                case .content(let state):
-                    contentView(state)
-                }
+                contentView
             }
             .navigationTitle("Shop")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        store.send(.dismiss)
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.black)
-                    }
-                }
-            }
         }
     }
     
-    private func contentView(_ state: PaywallState) -> some View {
+    private var contentView: some View {
         ScrollView {
             VStack(spacing: 16) {
                 // Limited Time Offer Banner
@@ -50,8 +31,8 @@ struct PaywallScreen: View {
                 
                 // Package Cards
                 VStack(spacing: 12) {
-                    ForEach(state.packages) { package in
-                        packageCard(package, isSelected: state.selectedPackage?.id == package.id)
+                    ForEach(store.state.packages) { package in
+                        packageCard(package, isSelected: store.state.selectedPackage?.id == package.id)
                             .onTapGesture {
                                 store.send(.selectPackage(package))
                             }
@@ -65,8 +46,8 @@ struct PaywallScreen: View {
                 missingHatBanner
                 
                 // Purchase Button
-                if let selectedPackage = state.selectedPackage {
-                    purchaseButton(package: selectedPackage, isPurchasing: state.isPurchasing)
+                if let selectedPackage = store.state.selectedPackage {
+                    purchaseButton(package: selectedPackage, isPurchasing: store.state.isPurchasing)
                 }
             }
             .padding(.top, 16)
