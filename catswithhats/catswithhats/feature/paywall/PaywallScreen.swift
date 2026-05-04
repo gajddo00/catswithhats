@@ -184,8 +184,8 @@ struct PaywallScreen: View {
                         RoundedRectangle(cornerRadius: 20)
                             .fill(isSelected ? Color.black : Color.white)
                     )
-                    .frame(width: 70, height: 40)
-                
+                    .frame(width: 100, height: 40)
+
                 Text(package.price)
                     .font(.callout)
                     .fontWeight(.bold)
