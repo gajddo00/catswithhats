@@ -4,5 +4,5 @@
 //
 
 struct CatCollectionState {
-    var cats: [Cat] = []
+    var cats: [Card] = []
 }
