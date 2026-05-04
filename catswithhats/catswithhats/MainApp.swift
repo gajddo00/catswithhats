@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
+        Purchases.configure(withAPIKey: "test_bUnjnqqIawpJDHUBwaidVZkftof")
         return true
     }
 }
@@ -26,15 +27,6 @@ struct MainApp: App {
 
     @State private var authService: any AuthService = FirebaseAuthService()
     @State private var databaseService: any DatabaseService = FirebaseDatabaseService()
-    init() {
-		// Firebase
-        FirebaseApp.configure()
-        _authService = State(initialValue: FirebaseAuthService())
-        _databaseService = State(initialValue: FirebaseDatabaseService())
-
-		// Revenue Cat
-		Purchases.configure(withAPIKey: "test_bUnjnqqIawpJDHUBwaidVZkftof")
-    }
 
     var body: some Scene {
         WindowGroup {
