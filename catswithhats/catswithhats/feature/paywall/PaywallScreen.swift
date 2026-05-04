@@ -33,17 +33,6 @@ struct PaywallScreen: View {
             }
             .navigationTitle("Shop")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button {
-                        store.send(.dismiss)
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.black)
-                    }
-                }
-            }
         }
     }
     
