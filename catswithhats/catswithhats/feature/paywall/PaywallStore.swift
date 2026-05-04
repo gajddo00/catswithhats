@@ -13,21 +13,31 @@ struct PackageInfo: Identifiable, Hashable {
     let subtitle: String
     let price: String
     let icon: String
-    let rcPackage: Package?
-    
-    init(id: String, title: String, subtitle: String, price: String, icon: String, rcPackage: Package? = nil) {
+    let tokens: Int
+    let package: Package?
+
+    init(
+        id: String,
+        title: String,
+        subtitle: String,
+        price: String,
+        icon: String,
+        tokens: Int,
+        package: Package? = nil
+    ) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
         self.price = price
         self.icon = icon
-        self.rcPackage = rcPackage
+        self.tokens = tokens
+        self.package = package
     }
-    
+
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     static func == (lhs: PackageInfo, rhs: PackageInfo) -> Bool {
         lhs.id == rhs.id
     }
@@ -36,13 +46,20 @@ struct PackageInfo: Identifiable, Hashable {
 @Observable
 final class PaywallStore: Store {
     private(set) var state = State()
-    
-    init() {
-        Task {
-            await loadPackages()
-        }
+    private let databaseService: any DatabaseService
+    private let userID: String
+    private let onCoinsChanged: (() -> Void)?
+
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
+        self.databaseService = databaseService
+        self.userID = userID
+        self.onCoinsChanged = onCoinsChanged
     }
-    
+
     func send(_ action: Action) {
         switch action {
         case .onAppear:
@@ -54,7 +71,6 @@ final class PaywallStore: Store {
         case .restorePurchases:
             Task { await restore() }
         case .dismiss:
-            // Handle dismiss - parent view should handle this
             break
         case .dismissPurchaseSuccess:
             state.showPurchaseSuccess = false
@@ -66,167 +82,130 @@ final class PaywallStore: Store {
 private extension PaywallStore {
     func loadPackages() async {
         state.isLoading = true
-        
         do {
             let offerings = try await Purchases.shared.offerings()
-            
-            guard let currentOffering = offerings.current,
-                  !currentOffering.availablePackages.isEmpty else {
-                // Fall back to mock data if no offerings available
+            guard let current = offerings.current,
+                  !current.availablePackages.isEmpty else {
                 loadMockPackages()
                 state.isLoading = false
                 return
             }
-            
-            // Map RevenueCat packages to our PackageInfo
-            state.packages = currentOffering.availablePackages.enumerated().map { index, package in
-                let icon = iconForPackage(at: index, packageType: package.packageType)
-                
-                return PackageInfo(
-                    id: package.identifier,
-                    title: titleForPackage(package),
-                    subtitle: subtitleForPackage(package),
-                    price: package.storeProduct.localizedPriceString,
-                    icon: icon,
-                    rcPackage: package
-                )
-            }
-            
+            state.packages = current.availablePackages.map(packageInfo(from:))
+            state.selectedPackage = state.packages.first
             state.isLoading = false
         } catch {
             print("Error loading offerings: \(error)")
-            // Fall back to mock data on error
             loadMockPackages()
             state.isLoading = false
         }
     }
-    
+
     func loadMockPackages() {
-        // Mock data matching the screenshot design (for testing without RevenueCat setup)
         state.packages = [
             PackageInfo(
                 id: "starter_bag",
                 title: "Starter Bag",
                 subtitle: "50 Tokens",
                 price: "$0.99",
-                icon: "🎁"
+                icon: "🎁",
+                tokens: 50
             ),
             PackageInfo(
                 id: "bucket_treats",
                 title: "Bucket of Treats",
                 subtitle: "250 Tokens",
                 price: "$4.99",
-                icon: "🪣"
+                icon: "🪣",
+                tokens: 250
             ),
             PackageInfo(
                 id: "golden_crate",
                 title: "Golden Crate",
                 subtitle: "500 Tokens",
                 price: "$14.99",
-                icon: "📦"
+                icon: "📦",
+                tokens: 500
             )
         ]
+        state.selectedPackage = state.packages.first
     }
-    
-    func titleForPackage(_ package: Package) -> String {
-        // Extract title from product display name or use package type
-        let displayName = package.storeProduct.localizedTitle
-        if !displayName.isEmpty {
-            return displayName
-        }
-        
-        switch package.packageType {
-        case .lifetime: return "Lifetime"
-        case .annual: return "Annual"
-        case .sixMonth: return "6 Months"
-        case .threeMonth: return "3 Months"
-        case .twoMonth: return "2 Months"
-        case .monthly: return "Monthly"
-        case .weekly: return "Weekly"
-        default: return package.identifier
-        }
-    }
-    
-    func subtitleForPackage(_ package: Package) -> String {
-        // Use the product description or create a subtitle based on type
-        let description = package.storeProduct.localizedDescription
-        if !description.isEmpty {
-            return description
-        }
-        
-        switch package.packageType {
-        case .lifetime: return "One-time purchase"
-        case .annual: return "Best value"
-        case .monthly: return "Billed monthly"
-        case .weekly: return "Billed weekly"
-        default: return "In-app purchase"
-        }
-    }
-    
-    func iconForPackage(at index: Int, packageType: PackageType) -> String {
-        // Map package types to icons
-        switch packageType {
-        case .lifetime: return "📦"
-        case .annual: return "🎁"
-        case .monthly: return "🪣"
-        case .weekly: return "🎉"
-        default:
-            // Use index-based icons if type doesn't match
-            let icons = ["🎁", "🪣", "📦", "🎉", "🌟"]
-            return icons[min(index, icons.count - 1)]
-        }
-    }
-    
+
     func purchase() async {
-        guard let selectedPackage = state.selectedPackage else {
-            return
-        }
-        
+        guard let info = state.selectedPackage else { return }
         state.isPurchasing = true
         state.errorMessage = nil
-        
-        // If this is a mock package (no rcPackage), simulate purchase
-        guard let rcPackage = selectedPackage.rcPackage else {
-            // Simulate delay for mock purchase
+        defer { state.isPurchasing = false }
+
+        // Mock package (no RC backing): simulate the purchase.
+        guard let pkg = info.package else {
             try? await Task.sleep(nanoseconds: 1_000_000_000)
-            state.purchasedPackageTitle = selectedPackage.title
-            state.showPurchaseSuccess = true
-            state.isPurchasing = false
+            do {
+                try await databaseService.addTokens(userID: userID, amount: info.tokens)
+                onCoinsChanged?()
+                state.purchasedPackageTitle = info.title
+                state.showPurchaseSuccess = true
+            } catch {
+                state.errorMessage = error.localizedDescription
+            }
             return
         }
-        
+
+        // Real RC package.
         do {
-            let result = try await Purchases.shared.purchase(package: rcPackage)
-            
-            // Check if the user successfully purchased
-            if !result.userCancelled {
-                // Purchase successful - show success animation
-                print("Purchase successful: \(result.customerInfo)")
-                state.purchasedPackageTitle = selectedPackage.title
-                state.showPurchaseSuccess = true
-            }
-            
-            state.isPurchasing = false
+            let result = try await Purchases.shared.purchase(package: pkg)
+            guard !result.userCancelled else { return }
+            try await databaseService.addTokens(userID: userID, amount: info.tokens)
+            onCoinsChanged?()
+            state.purchasedPackageTitle = info.title
+            state.showPurchaseSuccess = true
         } catch {
             print("Purchase failed: \(error)")
-            state.isPurchasing = false
             state.errorMessage = error.localizedDescription
         }
     }
-    
+
     func restore() async {
         state.isLoading = true
-        
         do {
             let customerInfo = try await Purchases.shared.restorePurchases()
             print("Purchases restored: \(customerInfo)")
-            
-            // Reload packages to refresh state
             await loadPackages()
         } catch {
             print("Restore failed: \(error)")
             state.isLoading = false
             state.errorMessage = error.localizedDescription
+        }
+    }
+
+    func packageInfo(from package: Package) -> PackageInfo {
+        let tokens = tokensFor(package: package)
+        return PackageInfo(
+            id: package.identifier,
+            title: package.storeProduct.localizedTitle,
+            subtitle: "\(tokens) Tokens",
+            price: package.storeProduct.localizedPriceString,
+            icon: iconFor(tokens: tokens),
+            tokens: tokens,
+            package: package
+        )
+    }
+
+    func tokensFor(package: Package) -> Int {
+        let id = package.identifier.lowercased()
+        if id.contains("starter") { return 50 }
+        if id.contains("bucket") || id.contains("medium") { return 250 }
+        if id.contains("golden") || id.contains("large") { return 500 }
+        let price = package.storeProduct.priceDecimalNumber.doubleValue
+        if price < 1.5 { return 50 }
+        if price < 10 { return 250 }
+        return 500
+    }
+
+    func iconFor(tokens: Int) -> String {
+        switch tokens {
+        case ..<100: "🎁"
+        case ..<300: "🪣"
+        default: "📦"
         }
     }
 }
@@ -240,7 +219,7 @@ extension PaywallStore {
         case dismiss
         case dismissPurchaseSuccess
     }
-    
+
     struct State {
         var packages: [PackageInfo] = []
         var selectedPackage: PackageInfo?

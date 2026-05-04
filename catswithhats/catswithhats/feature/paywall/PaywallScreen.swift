@@ -6,8 +6,20 @@
 import SwiftUI
 
 struct PaywallScreen: View {
-    @State private var store = PaywallStore()
+    @State private var store: PaywallStore
     @Environment(\.dismiss) private var dismiss
+
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
+        _store = State(initialValue: PaywallStore(
+            databaseService: databaseService,
+            userID: userID,
+            onCoinsChanged: onCoinsChanged
+        ))
+    }
     
     var body: some View {
         NavigationStack {
@@ -15,9 +27,9 @@ struct PaywallScreen: View {
                 // Cream/beige background matching the screenshot
                 Color(red: 0.95, green: 0.94, blue: 0.87)
                     .ignoresSafeArea()
-                
+
                 contentView
-                
+
                 // Purchase success overlay with confetti
                 if store.state.showPurchaseSuccess,
                    let packageTitle = store.state.purchasedPackageTitle {
@@ -249,6 +261,3 @@ struct PaywallScreen: View {
     }
 }
 
-#Preview {
-    PaywallScreen()
-}
