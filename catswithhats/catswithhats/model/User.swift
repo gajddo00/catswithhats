@@ -11,4 +11,5 @@ struct User: Codable, Identifiable, Hashable, Sendable {
     var id: String
     var name: String
     var createdAt: Date
+    var tokens: Int?
 }

@@ -20,9 +20,10 @@ struct LandingScreen: View {
     }
 
     var body: some View {
-        if isAuthenticated {
+        if isAuthenticated, let userID = authService.currentUserID {
             MainTabScreen(
-                databaseService: databaseService
+                databaseService: databaseService,
+                userID: userID
             )
         } else {
             LoginScreen(
