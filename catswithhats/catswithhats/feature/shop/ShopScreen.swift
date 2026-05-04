@@ -7,6 +7,7 @@ import SwiftUI
 
 struct ShopScreen: View {
     @State private var store: ShopStore
+    @State private var showPaywall = false
 
     init(databaseService: any DatabaseService) {
         _store = State(initialValue: ShopStore(databaseService: databaseService))
@@ -25,8 +26,16 @@ struct ShopScreen: View {
     }
 
     private func contentView(_ state: ShopState) -> some View {
-        Text("Shop")
-            .navigationTitle("Shop")
-            .onAppear { store.send(.onAppear) }
+        VStack {
+            Button("Open Paywall") {
+                showPaywall = true
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .navigationTitle("Shop")
+        .onAppear { store.send(.onAppear) }
+        .sheet(isPresented: $showPaywall) {
+            PaywallScreen()
+        }
     }
 }

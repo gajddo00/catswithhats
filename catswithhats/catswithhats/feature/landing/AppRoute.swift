@@ -5,4 +5,5 @@
 
 enum AppRoute: Hashable {
     case catDetail(Cat)
+    case paywall
 }
