@@ -21,16 +21,15 @@ struct ContentView: View {
 
     var body: some View {
         if isAuthenticated {
-            VStack(spacing: 16) {
-                Text("Logged in")
-                    .font(.title)
-                Button("Sign Out") {
-                    try? authService.signOut()
-                    isAuthenticated = false
-                }
-                .buttonStyle(.bordered)
+            NavigationStack {
+                HomeScreen(databaseService: databaseService)
+                    .navigationDestination(for: AppRoute.self) { route in
+                        switch route {
+                        case .catDetail(let cat):
+                            Text(cat.name) // TODO: replace with CatDetailScreen
+                        }
+                    }
             }
-            .padding()
         } else {
             LoginScreen(authService: authService) {
                 isAuthenticated = true
