@@ -29,7 +29,7 @@ struct CatCollectionScreen: View {
                 collectionGridView
             }
         }
-        .background(Color.Theme.surface.ignoresSafeArea())
+        .background(Color.Theme.background.ignoresSafeArea())
         .onAppear { store.send(.onAppear) }
     }
 
@@ -37,7 +37,7 @@ struct CatCollectionScreen: View {
 
     private var emptyStateView: some View {
         ScrollView {
-            VStack(spacing: .large) {
+            VStack(spacing: .regular) {
                 if let card = store.state.freeCard {
                     PrizeCardView(card: card)
                         .padding(.horizontal, .regular)
@@ -46,7 +46,7 @@ struct CatCollectionScreen: View {
 
                 Spacer(minLength: Spacing.large.rawValue)
 
-                VStack(spacing: .small) {
+                VStack(spacing: .mid) {
                     Button("ADD TO COLLECTION") {
                         store.send(.acceptCard)
                     }

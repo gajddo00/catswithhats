@@ -20,7 +20,7 @@ struct PrizeCardView: View {
                     .scaledToFit()
                     .padding(.regular)
             }
-            .aspectRatio(1, contentMode: .fit)
+            .aspectRatio(1.3, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerRadius: .mid, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: .mid, style: .continuous)
