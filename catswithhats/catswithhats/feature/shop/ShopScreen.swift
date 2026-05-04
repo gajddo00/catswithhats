@@ -6,37 +6,25 @@
 import SwiftUI
 
 struct ShopScreen: View {
-    @State private var store: ShopStore
-    @State private var showPaywall = false
+    let databaseService: any DatabaseService
+    let userID: String
+    let onCoinsChanged: (() -> Void)?
 
-    init(databaseService: any DatabaseService) {
-        _store = State(initialValue: ShopStore(databaseService: databaseService))
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
+        self.databaseService = databaseService
+        self.userID = userID
+        self.onCoinsChanged = onCoinsChanged
     }
 
     var body: some View {
-		PaywallScreen()
-//        switch store.state.uiState {
-//        case .loading:
-//            ProgressView()
-//        case .error(let message):
-//            Text(message)
-//                .foregroundStyle(.red)
-//        case .content(let state):
-//            contentView(state)
-//        }
-    }
-
-    private func contentView(_ state: ShopState) -> some View {
-        VStack {
-            Button("Open Paywall") {
-                showPaywall = true
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .navigationTitle("Shop")
-        .onAppear { store.send(.onAppear) }
-        .sheet(isPresented: $showPaywall) {
-            PaywallScreen()
-        }
+        PaywallScreen(
+            databaseService: databaseService,
+            userID: userID,
+            onCoinsChanged: onCoinsChanged
+        )
     }
 }

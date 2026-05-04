@@ -34,7 +34,8 @@ struct MainTabScreen: View {
             NavigationStack {
                 GachaScreen(
                     databaseService: databaseService,
-                    userID: userID
+                    userID: userID,
+                    onCoinsChanged: { store.send(.refresh) }
                 )
                 .coinsToolbar(coins: store.state.coins)
             }
@@ -53,8 +54,12 @@ struct MainTabScreen: View {
             .tag(AppTab.collection)
 
             NavigationStack {
-                ShopScreen(databaseService: databaseService)
-                    .coinsToolbar(coins: store.state.coins)
+                ShopScreen(
+                    databaseService: databaseService,
+                    userID: userID,
+                    onCoinsChanged: { store.send(.refresh) }
+                )
+                .coinsToolbar(coins: store.state.coins)
             }
             .tabItem { Label("SHOP", systemImage: "bag") }
             .tag(AppTab.shop)

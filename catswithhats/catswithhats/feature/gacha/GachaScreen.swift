@@ -8,10 +8,15 @@ import SwiftUI
 struct GachaScreen: View {
     @State private var store: GachaStore
 
-    init(databaseService: any DatabaseService, userID: String) {
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
         _store = State(initialValue: GachaStore(
             databaseService: databaseService,
-            userID: userID
+            userID: userID,
+            onCoinsChanged: onCoinsChanged
         ))
     }
 
@@ -60,7 +65,7 @@ private extension GachaScreen {
             Spacer(minLength: 0)
             GachaMachineView(isSpinning: state.isSpinning)
             TurnButton(
-                cost: 24,
+                cost: GachaStore.spinCost,
                 isEnabled: state.canSpin,
                 action: { store.send(.spinTapped) }
             )
@@ -110,7 +115,7 @@ private struct TurnButton: View {
             }
         }
         .buttonStyle(.sticker)
-        // .disabled(!isEnabled)
+        .disabled(!isEnabled)
         .frame(maxWidth: 240)
     }
 }
@@ -314,9 +319,15 @@ private struct GachaResultSheet: View {
                     .foregroundStyle(Color.cSubtitle)
 
                 if let cat = CatImage(rawValue: card.assetID) {
-                    CatImageView(cat: cat, size: 220, shape: .rounded)
+                    let cardSize: CGFloat = 220
+                    let cardCorner = cardSize * 0.22
+                    CatImageView(cat: cat, size: cardSize, shape: .rounded)
                         .background(Color.white)
-                        .stickerStyle(cornerRadius: .large, lineWidth: 4, shadowOffset: 8)
+                        .stickerStyle(
+                            RoundedRectangle(cornerRadius: cardCorner, style: .continuous),
+                            lineWidth: 4,
+                            shadowOffset: 8
+                        )
                 }
 
                 Text(card.name)

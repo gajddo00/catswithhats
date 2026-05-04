@@ -6,21 +6,31 @@
 import SwiftUI
 
 struct PaywallScreen: View {
-    @State private var store = PaywallStore()
+    @State private var store: PaywallStore
     @Environment(\.dismiss) private var dismiss
+
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
+        _store = State(initialValue: PaywallStore(
+            databaseService: databaseService,
+            userID: userID,
+            onCoinsChanged: onCoinsChanged
+        ))
+    }
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Cream/beige background matching the screenshot
-                Color(red: 0.95, green: 0.94, blue: 0.87)
-                    .ignoresSafeArea()
-                
-                contentView
-            }
-            .navigationTitle("Shop")
-            .navigationBarTitleDisplayMode(.inline)
+        ZStack {
+            // Cream/beige background matching the screenshot
+            Color(red: 0.95, green: 0.94, blue: 0.87)
+                .ignoresSafeArea()
+
+            contentView
         }
+        .navigationTitle("Shop")
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     private var contentView: some View {
@@ -207,6 +217,3 @@ struct PaywallScreen: View {
     }
 }
 
-#Preview {
-    PaywallScreen()
-}

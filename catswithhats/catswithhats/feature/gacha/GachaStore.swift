@@ -8,13 +8,21 @@ import Observation
 
 @Observable
 final class GachaStore: Store {
+    static let spinCost: Int = 24
+
     private(set) var state = State()
     private let databaseService: any DatabaseService
     private let userID: String
+    private let onCoinsChanged: (() -> Void)?
 
-    init(databaseService: any DatabaseService, userID: String) {
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
         self.databaseService = databaseService
         self.userID = userID
+        self.onCoinsChanged = onCoinsChanged
     }
 
     func send(_ action: Action) {
@@ -23,7 +31,7 @@ final class GachaStore: Store {
             Task { await load() }
 
         case .spinTapped:
-            guard case .content(let s) = state.uiState, !s.isSpinning else { return }
+            guard case .content(let s) = state.uiState, s.canSpin else { return }
             Task { await spin() }
 
         case .dismissResult:
@@ -47,14 +55,21 @@ private extension GachaStore {
     func spin() async {
         updateContent { $0.phase = .spinning }
 
-        let drawTask = Task<Card, Error> {
-            try await databaseService.drawRandomCard(userID: userID)
-        }
-        try? await Task.sleep(for: .seconds(1.5))
-
         do {
+            try await databaseService.spendTokens(userID: userID, amount: Self.spinCost)
+            onCoinsChanged?()
+
+            let drawTask = Task<Card, Error> {
+                try await databaseService.drawRandomCard(userID: userID)
+            }
+            try? await Task.sleep(for: .seconds(1.5))
             let card = try await drawTask.value
-            updateContent { $0.phase = .result(card) }
+
+            let user = try? await databaseService.fetchUser(id: userID)
+            updateContent {
+                if let user { $0.user = user }
+                $0.phase = .result(card)
+            }
         } catch {
             updateContent { $0.phase = .idle }
         }

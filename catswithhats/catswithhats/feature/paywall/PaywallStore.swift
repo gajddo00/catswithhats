@@ -5,6 +5,7 @@
 
 import Foundation
 import Observation
+import RevenueCat
 
 struct PackageInfo: Identifiable, Hashable {
     let id: String
@@ -12,21 +13,31 @@ struct PackageInfo: Identifiable, Hashable {
     let subtitle: String
     let price: String
     let icon: String
-    let package: Any?
-    
-    init(id: String, title: String, subtitle: String, price: String, icon: String, package: Any? = nil) {
+    let tokens: Int
+    let package: Package?
+
+    init(
+        id: String,
+        title: String,
+        subtitle: String,
+        price: String,
+        icon: String,
+        tokens: Int,
+        package: Package? = nil
+    ) {
         self.id = id
         self.title = title
         self.subtitle = subtitle
         self.price = price
         self.icon = icon
+        self.tokens = tokens
         self.package = package
     }
-    
+
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     static func == (lhs: PackageInfo, rhs: PackageInfo) -> Bool {
         lhs.id == rhs.id
     }
@@ -35,15 +46,24 @@ struct PackageInfo: Identifiable, Hashable {
 @Observable
 final class PaywallStore: Store {
     private(set) var state = State()
-    
-    init() {
-        loadPackages()
+    private let databaseService: any DatabaseService
+    private let userID: String
+    private let onCoinsChanged: (() -> Void)?
+
+    init(
+        databaseService: any DatabaseService,
+        userID: String,
+        onCoinsChanged: (() -> Void)? = nil
+    ) {
+        self.databaseService = databaseService
+        self.userID = userID
+        self.onCoinsChanged = onCoinsChanged
     }
-    
+
     func send(_ action: Action) {
         switch action {
         case .onAppear:
-            break
+            Task { await loadPackages() }
         case .selectPackage(let package):
             state.selectedPackage = package
         case .purchase:
@@ -51,57 +71,75 @@ final class PaywallStore: Store {
         case .restorePurchases:
             Task { await restore() }
         case .dismiss:
-            // Handle dismiss - parent view should handle this
             break
         }
     }
 }
 
 private extension PaywallStore {
-    func loadPackages() {
-        // Mock data matching the screenshot design
-        state.packages = [
-            PackageInfo(
-                id: "starter_bag",
-                title: "Starter Bag",
-                subtitle: "50 Tokens",
-                price: "$0.99",
-                icon: "🎁"
-            ),
-            PackageInfo(
-                id: "bucket_treats",
-                title: "Bucket of Treats",
-                subtitle: "250 Tokens",
-                price: "$4.99",
-                icon: "🪣"
-            ),
-            PackageInfo(
-                id: "golden_crate",
-                title: "Golden Crate",
-                subtitle: "500 Tokens",
-                price: "$14.99",
-                icon: "📦"
-            )
-        ]
-    }
-    
-    func purchase() async {
-        guard let selectedPackage = state.selectedPackage else {
-            return
+    func loadPackages() async {
+        do {
+            let offerings = try await Purchases.shared.offerings()
+            guard let current = offerings.current else {
+                state.packages = []
+                return
+            }
+            state.packages = current.availablePackages.map(packageInfo(from:))
+            state.selectedPackage = state.packages.first
+        } catch {
+            // surface later
         }
-        
-        state.isPurchasing = true
-        
-        // TODO: Implement actual RevenueCat purchase
-        // For now, just simulate a delay
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
-        
-        state.isPurchasing = false
     }
-    
+
+    func purchase() async {
+        guard let info = state.selectedPackage,
+              let pkg = info.package else { return }
+        state.isPurchasing = true
+        defer { state.isPurchasing = false }
+        do {
+            let result = try await Purchases.shared.purchase(package: pkg)
+            guard !result.userCancelled else { return }
+            try await databaseService.addTokens(userID: userID, amount: info.tokens)
+            onCoinsChanged?()
+        } catch {
+            // surface later
+        }
+    }
+
     func restore() async {
-        // TODO: Implement actual RevenueCat restore
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        _ = try? await Purchases.shared.restorePurchases()
+    }
+
+    func packageInfo(from package: Package) -> PackageInfo {
+        let tokens = tokensFor(package: package)
+        return PackageInfo(
+            id: package.identifier,
+            title: package.storeProduct.localizedTitle,
+            subtitle: "\(tokens) Tokens",
+            price: package.storeProduct.localizedPriceString,
+            icon: iconFor(tokens: tokens),
+            tokens: tokens,
+            package: package
+        )
+    }
+
+    func tokensFor(package: Package) -> Int {
+        let id = package.identifier.lowercased()
+        if id.contains("starter") { return 50 }
+        if id.contains("bucket") || id.contains("medium") { return 250 }
+        if id.contains("golden") || id.contains("large") { return 500 }
+        let price = package.storeProduct.priceDecimalNumber.doubleValue
+        if price < 1.5 { return 50 }
+        if price < 10 { return 250 }
+        return 500
+    }
+
+    func iconFor(tokens: Int) -> String {
+        switch tokens {
+        case ..<100: "🎁"
+        case ..<300: "🪣"
+        default: "📦"
+        }
     }
 }
 
@@ -113,7 +151,7 @@ extension PaywallStore {
         case restorePurchases
         case dismiss
     }
-    
+
     struct State {
         var packages: [PackageInfo] = []
         var selectedPackage: PackageInfo?
