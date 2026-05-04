@@ -21,18 +21,12 @@ struct LandingScreen: View {
 
     var body: some View {
         if isAuthenticated {
-            VStack(spacing: .regular) {
-                Text("logged_in")
-                    .font(.title)
-                Button("sign_out") {
-                    try? authService.signOut()
-                    isAuthenticated = false
-                }
-                .buttonStyle(.bordered)
-            }
-            .padding()
+            MainTabScreen(databaseService: databaseService)
         } else {
-            LoginScreen(authService: authService) {
+            LoginScreen(
+                authService: authService,
+                databaseService: databaseService
+            ) {
                 isAuthenticated = true
             }
         }

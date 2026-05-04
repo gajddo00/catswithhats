@@ -11,8 +11,17 @@ struct LoginScreen: View {
     @State private var store: LoginStore
     let onLoginComplete: () -> Void
 
-    init(authService: any AuthService, onLoginComplete: @escaping () -> Void) {
-        _store = State(initialValue: LoginStore(authService: authService))
+    init(
+        authService: any AuthService,
+        databaseService: any DatabaseService,
+        onLoginComplete: @escaping () -> Void
+    ) {
+        _store = State(
+            initialValue: LoginStore(
+                authService: authService,
+                databaseService: databaseService
+            )
+        )
         self.onLoginComplete = onLoginComplete
     }
 

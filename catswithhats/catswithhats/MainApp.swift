@@ -8,12 +8,24 @@
 import FirebaseCore
 import RevenueCat
 import SwiftUI
+import UIKit
+
+final class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        FirebaseApp.configure()
+        return true
+    }
+}
 
 @main
 struct MainApp: App {
-    @State private var authService: any AuthService
-    @State private var databaseService: any DatabaseService
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
+    @State private var authService: any AuthService = FirebaseAuthService()
+    @State private var databaseService: any DatabaseService = FirebaseDatabaseService()
     init() {
 		// Firebase
         FirebaseApp.configure()
