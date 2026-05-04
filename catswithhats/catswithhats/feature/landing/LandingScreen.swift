@@ -21,7 +21,7 @@ struct LandingScreen: View {
 
     var body: some View {
         if isAuthenticated {
-            MainTabScreen(databaseService: databaseService)
+            MainTabScreen(databaseService: databaseService, userID: authService.currentUserID ?? "")
         } else {
             LoginScreen(
                 authService: authService,

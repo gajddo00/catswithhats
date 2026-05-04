@@ -2,7 +2,5 @@
 //  CatCollectionState.swift
 //  catswithhats
 //
-
-struct CatCollectionState {
-    var cats: [Cat] = []
-}
+//  State is defined as a nested type in CatCollectionStore.
+//
