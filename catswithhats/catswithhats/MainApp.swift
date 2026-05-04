@@ -21,7 +21,7 @@ struct MainApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(
+            LandingScreen(
                 authService: authService,
                 databaseService: databaseService
             )

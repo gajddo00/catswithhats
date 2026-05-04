@@ -1,0 +1,61 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "continue" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        }
+      }
+    },
+    "logged_in" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logged in"
+          }
+        }
+      }
+    },
+    "sign_out" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign Out"
+          }
+        }
+      }
+    },
+    "username" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Username"
+          }
+        }
+      }
+    },
+    "welcome" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  LandingScreen.swift
 //  catswithhats
 //
 //  Created by Dominika Gajdova on 04.05.2026.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct LandingScreen: View {
     let authService: any AuthService
     let databaseService: any DatabaseService
 
@@ -21,10 +21,10 @@ struct ContentView: View {
 
     var body: some View {
         if isAuthenticated {
-            VStack(spacing: 16) {
-                Text("Logged in")
+            VStack(spacing: .regular) {
+                Text("logged_in")
                     .font(.title)
-                Button("Sign Out") {
+                Button("sign_out") {
                     try? authService.signOut()
                     isAuthenticated = false
                 }
